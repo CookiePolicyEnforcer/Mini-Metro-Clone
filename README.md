@@ -4,11 +4,11 @@ A small and unfinished clone of the video game Mini Metro by Dinosaur Polo Club 
 <table style="border-collapse: collapse;">
 <tr>
 <td style="border: none; text-align: center;">
-  <img width="912" alt="MiniMetroClone_game_mode" src="https://github.com/user-attachments/assets/e4ba84b2-2e66-4ab7-9f95-611b70940bae"><br>
+  <img width="500" alt="MiniMetroClone_game_mode" src="https://github.com/user-attachments/assets/15359e2a-0f3c-42d1-9c33-785a4c772d53"><br>
   <em>Game Mode</em>
 </td>
 <td style="border: none; text-align: center;">
-  <img width="912" alt="MiniMetroClone_build_mode" src="https://github.com/user-attachments/assets/f8a36c98-74d8-4d4d-a45d-919f71bfb7a9"><br>
+  <img width="500" alt="MiniMetroClone_build_mode" src="https://github.com/user-attachments/assets/ef803d1d-850c-41cd-adc8-45bc94497bd2"><br>
   <em>Build Mode</em>
 </td>
 </tr>
@@ -31,3 +31,5 @@ A small and unfinished clone of the video game Mini Metro by Dinosaur Polo Club 
 - **Place station**: Left-click on the map to place a new station
 - **Remove station**: Left-click on an existing station to remove it
 - **Change station type**: Right-click on a station to cycle through station types
+
+
