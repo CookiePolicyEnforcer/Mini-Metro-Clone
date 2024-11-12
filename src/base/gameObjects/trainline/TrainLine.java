@@ -99,9 +99,17 @@ public class TrainLine extends AbstractGameObject {
     public void addStationWithSelector(Station newStation) {
         if (stationSelector != null) {
             stationSelector.setEndStation(newStation);
-            segments.add(stationSelector);
-            stations.add(newStation);
 
+            // Determine whether the new station is the first or last station of the line
+            if (stationSelector.getStartStation() == stations.getFirst() && stations.size() > 1) {
+                segments.addFirst(stationSelector);
+                stations.addFirst(newStation);
+            } else {
+                segments.addLast(stationSelector);
+                stations.addLast(newStation);
+            }
+
+            // Select the new station and set it left pressed, so a new selector can be created there
             Station oldStation = stationSelector.getStartStation();
             oldStation.setLeftPressed(false);
             oldStation.setSelected(true, lineColor);
@@ -115,14 +123,28 @@ public class TrainLine extends AbstractGameObject {
         if (station == stationSelector.getStartStation()) {
             stationSelector.getStartStation().setLeftPressed(false);
             stationSelector.getStartStation().setSelected(false, null);
-            segments.removeLast();
-            stations.removeLast();
 
-            // Select the new last station of the line
-            if (!stations.isEmpty()) {
-                stations.getLast().setLeftPressed(true);
-                stations.getLast().setSelected(true, lineColor);
+            // Find segment that contains the station: Either first or last segment
+            if (segments.getFirst().getStartStation() == station) {
+                segments.removeFirst();
+                stations.removeFirst();
+
+                // Select the new first station of the line
+                if (!stations.isEmpty()) {
+                    stations.getFirst().setLeftPressed(true);
+                    stations.getFirst().setSelected(true, lineColor);
+                }
+            } else {
+                segments.removeLast();
+                stations.removeLast();
+
+                // Select the new last station of the line
+                if (!stations.isEmpty()) {
+                    stations.getLast().setLeftPressed(true);
+                    stations.getLast().setSelected(true, lineColor);
+                }
             }
+
             stationSelector = null;
         }
     }
