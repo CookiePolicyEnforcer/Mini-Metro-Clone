@@ -302,6 +302,7 @@ public class Train extends AbstractGameObject {
 
             switch (type) {
                 case PathIterator.SEG_MOVETO:
+                    // Store initial coordinates for path traversal
                     if (first) {
                         segmentStartX = coords[0];
                         segmentStartY = coords[1];
@@ -310,123 +311,98 @@ public class Train extends AbstractGameObject {
                     break;
 
                 case PathIterator.SEG_LINETO:
-                    handleLinearSegment(coords, segmentStartX, segmentStartY, remainingDistance);
+                    double segmentLength = Math.sqrt(
+                            Math.pow(coords[0] - segmentStartX, 2) +
+                                    Math.pow(coords[1] - segmentStartY, 2)
+                    );
+
+                    if (remainingDistance <= segmentLength) {
+                        // Calculate position along the current line segment
+                        double ratio = remainingDistance / segmentLength;
+                        x = (int) (segmentStartX + (coords[0] - segmentStartX) * ratio);
+                        y = (int) (segmentStartY + (coords[1] - segmentStartY) * ratio);
+
+                        // Calculate rotation angle for the train based on segment direction
+                        double dx = coords[0] - segmentStartX;
+                        double dy = coords[1] - segmentStartY;
+                        angle = Math.atan2(dy, dx);
+                        if (!movingForward) {
+                            angle += Math.PI; // Rotate 180° when moving backwards
+                        }
+                        return;
+                    }
+
+                    remainingDistance -= segmentLength;
+                    segmentStartX = coords[0];
+                    segmentStartY = coords[1];
                     break;
 
                 case PathIterator.SEG_QUADTO:
-                    handleQuadraticSegment(coords, segmentStartX, segmentStartY, remainingDistance);
+                    // Handle curved path segments using quadratic Bézier curves
+                    double steps = 10;
+                    double lastQuadX = segmentStartX;
+                    double lastQuadY = segmentStartY;
+                    double[] curvePoints = new double[(int) (steps * 2)];
+
+                    // Pre-calculate points along the curve for smoother movement
+                    for (int i = 0; i <= steps; i++) {
+                        double t = i / steps;
+                        // Calculate point on quadratic Bézier curve using parametric equation
+                        double newX = Math.pow(1-t, 2) * segmentStartX +
+                                2 * (1-t) * t * coords[0] +
+                                Math.pow(t, 2) * coords[2];
+                        double newY = Math.pow(1-t, 2) * segmentStartY +
+                                2 * (1-t) * t * coords[1] +
+                                Math.pow(t, 2) * coords[3];
+
+                        // Store curve points for later angle calculation
+                        if (i < steps) {
+                            curvePoints[i*2] = newX;
+                            curvePoints[i*2+1] = newY;
+                        }
+
+                        if (i > 0) {
+                            double stepLength = Math.sqrt(
+                                    Math.pow(newX - lastQuadX, 2) +
+                                            Math.pow(newY - lastQuadY, 2)
+                            );
+
+                            if (remainingDistance <= stepLength) {
+                                // Interpolate position along current curve segment
+                                double ratio = remainingDistance / stepLength;
+                                x = (int) (lastQuadX + (newX - lastQuadX) * ratio);
+                                y = (int) (lastQuadY + (newY - lastQuadY) * ratio);
+
+                                // Calculate rotation angle using next point on curve for smooth transitions
+                                double nextX, nextY;
+                                if (i < steps) {
+                                    nextX = curvePoints[i*2];
+                                    nextY = curvePoints[i*2+1];
+                                } else {
+                                    nextX = coords[2];
+                                    nextY = coords[3];
+                                }
+                                angle = Math.atan2(nextY - lastQuadY, nextX - lastQuadX);
+                                if (!movingForward) {
+                                    angle += Math.PI; // Rotate 180° when moving backwards
+                                }
+                                return;
+                            }
+
+                            remainingDistance -= stepLength;
+                        }
+
+                        lastQuadX = newX;
+                        lastQuadY = newY;
+                    }
+
+                    segmentStartX = coords[2];
+                    segmentStartY = coords[3];
                     break;
             }
 
             pi.next();
         }
-    }
-
-    /**
-     * Handles linear path segments during position and angle updates.
-     */
-    private void handleLinearSegment(double[] coords, double segmentStartX, double segmentStartY, double remainingDistance) {
-        double segmentLength = Math.sqrt(
-                Math.pow(coords[0] - segmentStartX, 2) +
-                        Math.pow(coords[1] - segmentStartY, 2)
-        );
-
-        if (remainingDistance <= segmentLength) {
-            double ratio = remainingDistance / segmentLength;
-            x = (int) (segmentStartX + (coords[0] - segmentStartX) * ratio);
-            y = (int) (segmentStartY + (coords[1] - segmentStartY) * ratio);
-
-            double dx = coords[0] - segmentStartX;
-            double dy = coords[1] - segmentStartY;
-            angle = Math.atan2(dy, dx);
-
-            if (!movingForward) {
-                angle = normalizeAngle(angle + Math.PI);
-            }
-            return;
-        }
-
-        remainingDistance -= segmentLength;
-        segmentStartX = coords[0];
-        segmentStartY = coords[1];
-    }
-
-    /**
-     * Handles quadratic curve segments during position and angle updates.
-     */
-    private void handleQuadraticSegment(double[] coords, double segmentStartX, double segmentStartY, double remainingDistance) {
-        double steps = 10;
-        double lastQuadX = segmentStartX;
-        double lastQuadY = segmentStartY;
-        double[] curvePoints = new double[(int) (steps * 2)];
-
-        for (int i = 0; i <= steps; i++) {
-            double t = i / steps;
-            double newX = Math.pow(1-t, 2) * segmentStartX +
-                    2 * (1-t) * t * coords[0] +
-                    Math.pow(t, 2) * coords[2];
-            double newY = Math.pow(1-t, 2) * segmentStartY +
-                    2 * (1-t) * t * coords[1] +
-                    Math.pow(t, 2) * coords[3];
-
-            if (i < steps) {
-                curvePoints[i*2] = newX;
-                curvePoints[i*2+1] = newY;
-            }
-
-            if (i > 0) {
-                handleCurveSegment(newX, newY, lastQuadX, lastQuadY, remainingDistance, curvePoints, i, steps, coords);
-            }
-
-            lastQuadX = newX;
-            lastQuadY = newY;
-        }
-
-        segmentStartX = coords[2];
-        segmentStartY = coords[3];
-    }
-
-    /**
-     * Handles individual curve segments during quadratic curve traversal.
-     */
-    private void handleCurveSegment(double newX, double newY, double lastQuadX, double lastQuadY,
-                                    double remainingDistance, double[] curvePoints, int i, double steps,
-                                    double[] coords) {
-        double stepLength = Math.sqrt(
-                Math.pow(newX - lastQuadX, 2) +
-                        Math.pow(newY - lastQuadY, 2)
-        );
-
-        if (remainingDistance <= stepLength) {
-            double ratio = remainingDistance / stepLength;
-            x = (int) (lastQuadX + (newX - lastQuadX) * ratio);
-            y = (int) (lastQuadY + (newY - lastQuadY) * ratio);
-
-            double nextX, nextY;
-            if (i < steps) {
-                nextX = curvePoints[i*2];
-                nextY = curvePoints[i*2+1];
-            } else {
-                nextX = coords[2];
-                nextY = coords[3];
-            }
-            angle = Math.atan2(nextY - lastQuadY, nextX - lastQuadX);
-            if (!movingForward) {
-                angle += Math.PI; // Rotate 180° when moving backwards
-            }
-            return;
-        }
-
-        remainingDistance -= stepLength;
-    }
-
-    /**
-     * Normalizes an angle to be between 0 and 2π radians.
-     */
-    private double normalizeAngle(double angle) {
-        while (angle < 0) angle += 2 * Math.PI;
-        while (angle >= 2 * Math.PI) angle -= 2 * Math.PI;
-        return angle;
     }
 
     /**
