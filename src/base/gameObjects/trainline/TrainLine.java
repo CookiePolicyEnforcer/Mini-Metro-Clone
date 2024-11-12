@@ -98,23 +98,32 @@ public class TrainLine extends AbstractGameObject {
 
     public void addStationWithSelector(Station newStation) {
         if (stationSelector != null) {
+            // Select the new station and set it left pressed, so a new selector can be created there
+            Station startStation = stationSelector.getStartStation();
+            startStation.setLeftPressed(false);
+            startStation.setSelected(true, lineColor);
+            newStation.setLeftPressed(true);
+            newStation.setSelected(true, lineColor);
+
+
+            // Turn the selector into a fixed segment by setting the end station
             stationSelector.setEndStation(newStation);
 
-            // Determine whether the new station is the first or last station of the line
+            // Determine at which end of the line the new station and segment should be added
             if (stationSelector.getStartStation() == stations.getFirst() && stations.size() > 1) {
+                // Swap the start and end station, so trains can move in the correct direction
+                stationSelector.setStartStation(newStation);
+                stationSelector.setEndStation(startStation);
+
+                // Add the new station and segment at the beginning of the line
                 segments.addFirst(stationSelector);
                 stations.addFirst(newStation);
             } else {
+                // Add the new station and segment at the end of the line
                 segments.addLast(stationSelector);
                 stations.addLast(newStation);
             }
 
-            // Select the new station and set it left pressed, so a new selector can be created there
-            Station oldStation = stationSelector.getStartStation();
-            oldStation.setLeftPressed(false);
-            oldStation.setSelected(true, lineColor);
-            newStation.setLeftPressed(true);
-            newStation.setSelected(true, lineColor);
             stationSelector = null;
         }
     }
@@ -227,18 +236,14 @@ public class TrainLine extends AbstractGameObject {
      * Determines the next segment based on the current index and direction of movement.
      * Returns null if the end of the line is reached.
      */
-    public TrainLineSegment getNextSegment(int currentSegmentIndex, boolean movingForward) {
-        int nextIndex;
-        if (movingForward) {
-            nextIndex = currentSegmentIndex + 1;
-            if (nextIndex >= segments.size()) {
-                return null; // End of the line reached
-            }
-        } else {
-            nextIndex = currentSegmentIndex - 1;
-            if (nextIndex < 0) {
-                return null; // Beginning of the line reached
-            }
+    public TrainLineSegment getNextSegment(TrainLineSegment currentSegment, boolean movingForward) {
+        int currentIndex = segments.indexOf(currentSegment);
+
+        if (currentIndex == -1) return null;
+
+        int nextIndex = movingForward ? currentIndex + 1 : currentIndex - 1;
+        if (nextIndex < 0 || nextIndex >= segments.size()) {
+            return null;
         }
         return segments.get(nextIndex);
     }

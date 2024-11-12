@@ -46,7 +46,6 @@ public class Train extends AbstractGameObject {
     // Train line information
     private final TrainLine trainLine;
     private TrainLineSegment currentSegment;
-    private int currentSegmentIndex;
 
     // Passenger handling
     private final TrainPassengerCompartment passengerCompartment;
@@ -116,10 +115,10 @@ public class Train extends AbstractGameObject {
      */
     private void initializeTrainPosition(int x, int y, Station targetStation) {
         PathPosition startPos = findPositionOnLine(x, y);
-        this.currentSegmentIndex = startPos.segmentIndex;
-        this.currentSegment = trainLine.getCurrentSegment(currentSegmentIndex);
+        this.currentSegment = trainLine.getSegments().get(startPos.segmentIndex);
         this.currentDistance = startPos.distance;
-        this.movingForward = shouldMoveForward(currentSegmentIndex, currentDistance, targetStation);
+        this.movingForward = shouldMoveForward(currentSegment, currentDistance, targetStation);
+
         initializePathMovement();
     }
 
@@ -160,29 +159,26 @@ public class Train extends AbstractGameObject {
     /**
      * Determines whether the train should move forward based on target station position.
      */
-    private boolean shouldMoveForward(int segmentIndex, double distance, Station targetStation) {
+    private boolean shouldMoveForward(TrainLineSegment segment, double distance, Station targetStation) {
         ArrayList<TrainLineSegment> segments = trainLine.getSegments();
-        double targetDistance = -1;
-        int targetSegmentIndex = -1;
 
+        // If the target station is in the current segment
+        if (segment.getStartStation() == targetStation) {
+            return distance > 0;
+        }
+        if (segment.getEndStation() == targetStation) {
+            return distance < PathUtils.calculatePathLength(segment.getPath());
+        }
+
+        // If not, check the position of the target segment
+        int currentIndex = segments.indexOf(segment);
         for (int i = 0; i < segments.size(); i++) {
-            TrainLineSegment segment = segments.get(i);
-            if (segment.getStartStation() == targetStation) {
-                targetSegmentIndex = i;
-                targetDistance = 0;
-                break;
-            }
-            if (segment.getEndStation() == targetStation) {
-                targetSegmentIndex = i;
-                targetDistance = PathUtils.calculatePathLength(segment.getPath());
-                break;
+            TrainLineSegment s = segments.get(i);
+            if (s.getStartStation() == targetStation || s.getEndStation() == targetStation) {
+                return i > currentIndex;
             }
         }
-
-        if (targetSegmentIndex == segmentIndex) {
-            return distance < targetDistance;
-        }
-        return targetSegmentIndex > segmentIndex;
+        return true;
     }
 
     /**
@@ -232,12 +228,11 @@ public class Train extends AbstractGameObject {
     private void handleForwardMovement(double moveDistance) {
         double newDistance = currentDistance + moveDistance;
         if (newDistance >= totalPathLength) {
-            TrainLineSegment nextSegment = trainLine.getNextSegment(currentSegmentIndex, true);
+            TrainLineSegment nextSegment = trainLine.getNextSegment(currentSegment, true);
             if (nextSegment == null) {
                 if (trainLine.isCircular()) {
                     // Return to first segment for circular lines
-                    currentSegment = trainLine.getCurrentSegment(0);
-                    currentSegmentIndex = 0;
+                    currentSegment = trainLine.getSegments().get(0);
                     currentDistance = 0;
                     initializePathMovement();
                 } else {
@@ -248,7 +243,6 @@ public class Train extends AbstractGameObject {
             } else {
                 // Move to next segment
                 currentSegment = nextSegment;
-                currentSegmentIndex++;
                 currentDistance = 0;
                 initializePathMovement();
             }
@@ -263,12 +257,11 @@ public class Train extends AbstractGameObject {
     private void handleBackwardMovement(double moveDistance) {
         double newDistance = currentDistance - moveDistance;
         if (newDistance <= 0) {
-            TrainLineSegment nextSegment = trainLine.getNextSegment(currentSegmentIndex, false);
+            TrainLineSegment nextSegment = trainLine.getNextSegment(currentSegment, false);
             if (nextSegment == null) {
                 if (trainLine.isCircular()) {
                     // Move to last segment for circular lines
-                    currentSegmentIndex = trainLine.getSegments().size() - 1;
-                    currentSegment = trainLine.getCurrentSegment(currentSegmentIndex);
+                    currentSegment = trainLine.getSegments().get(trainLine.getSegments().size() - 1);
                     currentDistance = PathUtils.calculatePathLength(currentSegment.getPath());
                     initializePathMovement();
                 } else {
@@ -279,7 +272,6 @@ public class Train extends AbstractGameObject {
             } else {
                 // Move to previous segment
                 currentSegment = nextSegment;
-                currentSegmentIndex--;
                 currentDistance = PathUtils.calculatePathLength(nextSegment.getPath());
                 initializePathMovement();
             }
@@ -437,7 +429,7 @@ public class Train extends AbstractGameObject {
      * @return The nearby station or null if none found within proximity
      */
     private Station findNearbyStation() {
-        double stationProximity = 5.0; // Distance threshold for passenger exchange
+        double stationProximity = 5.0;
 
         if (Math.abs(x - currentSegment.getStartStation().x) < stationProximity &&
                 Math.abs(y - currentSegment.getStartStation().y) < stationProximity) {
