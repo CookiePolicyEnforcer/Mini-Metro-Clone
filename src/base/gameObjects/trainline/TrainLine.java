@@ -217,34 +217,34 @@ public class TrainLine extends AbstractGameObject {
     }
 
     /**
-     * Gibt das aktuelle Segment basierend auf dem Index und der Bewegungsrichtung zurück
+     * Returns the current segment based on the index and direction of movement.
      */
     public TrainLineSegment getCurrentSegment(int currentSegmentIndex) {
         return segments.get(currentSegmentIndex);
     }
 
     /**
-     * Ermittelt das nächste Segment basierend auf aktuellem Index und Bewegungsrichtung.
-     * Gibt null zurück, wenn das Ende der Linie erreicht ist.
+     * Determines the next segment based on the current index and direction of movement.
+     * Returns null if the end of the line is reached.
      */
     public TrainLineSegment getNextSegment(int currentSegmentIndex, boolean movingForward) {
         int nextIndex;
         if (movingForward) {
             nextIndex = currentSegmentIndex + 1;
             if (nextIndex >= segments.size()) {
-                return null; // Ende der Linie erreicht
+                return null; // End of the line reached
             }
         } else {
             nextIndex = currentSegmentIndex - 1;
             if (nextIndex < 0) {
-                return null; // Anfang der Linie erreicht
+                return null; // Beginning of the line reached
             }
         }
         return segments.get(nextIndex);
     }
 
     /**
-     * Gibt den Index eines Segments in der Liste zurück
+     * Returns the index of a segment in the list.
      */
     public int getSegmentIndex(TrainLineSegment segment) {
         return segments.indexOf(segment);
