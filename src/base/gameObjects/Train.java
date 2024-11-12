@@ -435,7 +435,7 @@ public class Train extends AbstractGameObject {
      * @return The nearby station or null if none found within proximity
      */
     private Station findNearbyStation() {
-        double stationProximity = 0.1; // Distance threshold for passenger exchange
+        double stationProximity = 5.0; // Distance threshold for passenger exchange
 
         if (Math.abs(x - currentSegment.getStartStation().x) < stationProximity &&
                 Math.abs(y - currentSegment.getStartStation().y) < stationProximity) {
