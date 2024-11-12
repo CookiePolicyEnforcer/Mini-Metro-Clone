@@ -239,7 +239,36 @@ public class TrainLine extends AbstractGameObject {
     public TrainLineSegment getNextSegment(TrainLineSegment currentSegment, boolean movingForward) {
         int currentIndex = segments.indexOf(currentSegment);
 
-        if (currentIndex == -1) return null;
+        // If currentSegment was removed -> try to find the next segment that was connected to the removed segment
+        if (currentIndex == -1) {
+            if (stations.contains(currentSegment.getStartStation()) || stations.contains(currentSegment.getEndStation())) {
+                // A segment is connected to the start or end of the removed segment
+                for (TrainLineSegment segment : segments) {
+                    if (segment.getStartStation() == currentSegment.getEndStation()) {
+                        // Found segment connected to the end of the removed segment
+                        if (movingForward) {
+                            // Train is moving toward end station -> return found segment
+                            return segment;
+                        }
+                        // Train is moving toward start station -> no next segment = change direction
+                        return null;
+                    }
+                    else if (segment.getEndStation() == currentSegment.getStartStation()) {
+                        // Found segment connected to the start of the removed segment
+                        if (movingForward) {
+                            // Train is moving toward end station -> no next segment = change direction
+                            return null;
+                        }
+                        // Train is moving toward start station -> return found segment
+                        return segment;
+                    }
+                }
+            }
+            else {
+                // No segment was connected to the removed segment -> let train circle around (currently no better solution)
+                return null;
+            }
+        }
 
         int nextIndex = movingForward ? currentIndex + 1 : currentIndex - 1;
         if (nextIndex < 0 || nextIndex >= segments.size()) {
