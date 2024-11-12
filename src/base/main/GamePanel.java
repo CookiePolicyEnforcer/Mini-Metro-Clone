@@ -4,13 +4,12 @@ import base.gameObjects.*;
 import base.gameObjects.shape.ShapeType;
 import base.gameObjects.station.Station;
 import base.gameObjects.station.StationExclusionCircle;
+import base.gameObjects.train.Train;
 import base.gameObjects.trainline.TrainLine;
 import base.gameObjects.ui.ModeToggle;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
 import java.util.concurrent.*;
 

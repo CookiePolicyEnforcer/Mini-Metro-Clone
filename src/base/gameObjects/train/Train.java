@@ -1,5 +1,7 @@
-package base.gameObjects;
+package base.gameObjects.train;
 
+import base.gameObjects.AbstractGameObject;
+import base.gameObjects.Passenger;
 import base.gameObjects.station.Station;
 import base.gameObjects.trainline.TrainLine;
 import base.gameObjects.trainline.TrainLineSegment;

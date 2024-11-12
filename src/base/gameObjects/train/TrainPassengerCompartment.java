@@ -1,5 +1,6 @@
-package base.gameObjects;
+package base.gameObjects.train;
 
+import base.gameObjects.Passenger;
 import base.gameObjects.shape.ShapeType;
 
 import java.awt.*;

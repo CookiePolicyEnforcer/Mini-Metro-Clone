@@ -1,7 +1,7 @@
 package base.gameObjects.trainline;
 
 import base.gameObjects.AbstractGameObject;
-import base.gameObjects.Train;
+import base.gameObjects.train.Train;
 import base.gameObjects.station.Station;
 import base.main.GamePanel;
 
